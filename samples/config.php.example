@@ -1,0 +1,5 @@
+<?php
+define('botenpoint', 'http://127.0.0.1:3000');
+
+define('wabotid', '+628386xxxxxx');
+define('tgbotid', '+examplebot');

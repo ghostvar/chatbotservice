@@ -7,4 +7,6 @@ logs
 samples/.tokens
 samples/config.php
 .env
+
 *.data.json
+*.key.json

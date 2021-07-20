@@ -1,31 +1,30 @@
 require('dotenv').config();
-const wa = require('@open-wa/wa-automate');
 const chatHandler = require('./handlers/chatHandler');
+const { WAConnection } = require('@adiwajshing/baileys');
+const fs = require('fs');
 
-wa.create({
-  sessionId: 'session',
-  qrTimeout: 0,
-  authTimeout: 0,
-  restartOnCrash: start,
-  cacheEnabled: false,
-  useChrome: true,
-  killProcessOnBrowserClose: true,
-  throwErrorOnTosBlock: false,
-  chromiumArgs: [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--aggressive-cache-discard',
-    '--disable-cache',
-    '--disable-application-cache',
-    '--disable-offline-load-stale-cache',
-    '--disk-cache-size=0'
-  ]
-}).then(client => start(client));
+async function connectToWhatsApp() {
+  const conn = new WAConnection();
 
-function start(client) {
-  console.log('[SERVER] WhatsApp Runtime Started!');
+  // session keys
+  if(fs.existsSync('./whatsapp.key.json')) {
+    conn.loadAuthInfo('./whatsapp.key.json');
+  }
 
-  client.onMessage(async message => {
-    await chatHandler(client, message);
+  conn.on('open', () => {
+    console.log(`credentials updated!`)
+    const authInfo = conn.base64EncodedAuthInfo();
+    fs.writeFileSync('./whatsapp.key.json', JSON.stringify(authInfo, null, '\t'));
   });
+
+  await conn.connect();
+  conn.on('chat-update', async event => {
+    if (event.messages && event.count) {
+      const message = event.messages.all()[0];
+      await chatHandler(conn, message, event);
+    } //else console.log(event) // see updates (can be archived, pinned etc.)
+  })
 }
+// run in main file
+connectToWhatsApp()
+  .catch(err => console.log("unexpected error: " + err)) // catch any errors

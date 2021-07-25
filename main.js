@@ -1,3 +1,3 @@
 
-require('./services/express');
-require('./services/wa');
+require('./cores/express');
+require('./cores/wa');

@@ -20,11 +20,14 @@ if (@$_POST['notelp']) {
 
   $token = generateRandomString(20);
   if (!is_dir('.tokens')) mkdir('.tokens');
-  file_get_contents(botenpoint.'/verify/create?token='.$token.'&redirecto=http://127.0.0.1:8080');
+  file_get_contents(botenpoint.'/verify?token='.$token.'&redirecto=http://127.0.0.1:8080');
   file_put_contents('.tokens/' . $token, json_encode(['notelp' => $_POST['notelp']]));
-} elseif (@$_GET['token'] && $_GET['client']) {
+} else if(@$_POST['chatid'] && @$_POST['text']) {
+  file_get_contents(botenpoint.'/send-message?chatid='.$_POST['chatid'].'&text='.urlencode($_POST['text']));
+} elseif (@$_GET['token'] && @$_GET['client'] && @$_GET['chatid']) {
   if(is_file('.tokens/'.$_GET['token'])) {
     $content = json_decode(file_get_contents('.tokens/'.$_GET['token']));
+    $content->chatid = $_GET['chatid'];
     switch(strtolower($_GET['client'])) {
       case 'wa':
         $content->wa = true;
@@ -42,15 +45,19 @@ if (@$_POST['notelp']) {
   http_response_code(400);
   die;
 }
-if ($handle = opendir('.tokens')) {
+if ($handle = @opendir('.tokens')) {
   echo "<ul>";
   while (false !== ($entry = readdir($handle))) {
     if ($entry != "." && $entry != "..") {
       $tx = json_decode(file_get_contents('.tokens/'.$entry));
-      $notelp = $tx->notelp;
+      $notelp = @$tx->notelp;
+      $chatid = @$tx->chatid;
       $wa = @$tx->wa ? 'style="text-decoration: line-through;"':'';
       $tg = @$tx->tg ? 'style="text-decoration: line-through;"':'';
-      echo "<li> ".$notelp." | <a target=\"_blank\" href=\"https://wa.me/".wabotid."?text=".$entry."\" ".$wa.">WhatsApp</a> - <a target=\"_blank\" href=\"https://t.me/".tgbotid."?send=halohalo\" ".$tg.">Telegram</a></li>";
+
+      $html = $notelp." | <a target=\"_blank\" href=\"https://wa.me/".wabotid."?text=".$entry."\" ".$wa.">WhatsApp</a> - <a target=\"_blank\" href=\"https://t.me/".tgbotid."?send=halohalo\" ".$tg.">Telegram</a>";
+      $html = "<form method=\"POST\">".$html." | <input name=\"text\" type=\"text\" /> <input type=\"hidden\" name=\"chatid\" value=\"".$chatid."\" /> </form>";
+      echo "<li>".$html."</li>";
     }
   }
   echo "</ul>";

@@ -1,6 +1,7 @@
 require('dotenv').config();
-const chatHandler = require('./handlers/chatHandler');
-const { WAConnection } = require('@adiwajshing/baileys');
+const chatHandler = require('../handlers/chatHandler');
+const Emiter = require('../services/eventEmiter');
+const { WAConnection, MessageType } = require('@adiwajshing/baileys');
 const fs = require('fs');
 
 async function connectToWhatsApp() {
@@ -23,7 +24,12 @@ async function connectToWhatsApp() {
       const message = event.messages.all()[0];
       await chatHandler(conn, message, event);
     } //else console.log(event) // see updates (can be archived, pinned etc.)
-  })
+  });
+
+  Emiter.on('sendMessage', ({ jid, text }) => {
+    // event pesan dari api
+    conn.sendMessage(jid, text, MessageType.text);
+  });
 }
 // run in main file
 connectToWhatsApp()

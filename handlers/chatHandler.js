@@ -23,7 +23,7 @@ module.exports = async (client, message, event) => {
         break;
 
       case '.tes':
-        const buttonMessage = {
+          client.sendMessage(jid, {
             contentText: "Hi it's button message",
             footerText: 'Hello World',
             buttons: [
@@ -31,8 +31,7 @@ module.exports = async (client, message, event) => {
               {buttonId: 'id2', buttonText: {displayText: 'Button 2'}, type: 1}
             ],
             headerType: 1
-        }
-        client.sendMessage(jid, buttonMessage, MessageType.buttonsMessage, { quoted: message });
+          }, MessageType.buttonsMessage, { quoted: message });
         break;
 
       case 'verify': // force
@@ -48,6 +47,7 @@ module.exports = async (client, message, event) => {
           axios.get(data.webhook_url, { params: { chatid, token: data.token, client: 'WA' } });
         }
         break;
+
     }
   } catch (error) {
     console.error(error);

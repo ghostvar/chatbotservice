@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+
 exports.seed = function(knex) {
   return knex('apps').del()
     .then(function () {

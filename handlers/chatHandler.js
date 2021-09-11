@@ -17,7 +17,12 @@ module.exports = async (client, message, event) => {
         let key = arg(1);
         let val = incometxt.substr(arg(0).length+arg(1).length+2);
         if(key && val && ownid) {
-          await knex('c_save').insert({ ownid, key, val });
+          let c_save = await knex('c_save').where({ ownid, key }).first();
+          if(c_save) {
+            await knex('c_save').where({ ownid, key }).update({ val, updated_at: knex.fn.now() });
+          } else {
+            await knex('c_save').insert({ ownid, key, val, created_at: knex.fn.now(), updated_at: knex.fn.now() });
+          }
           client.sendMessage(jid, 'tersimpan!', MessageType.text, { quoted: message });
         } else {
           client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
@@ -27,8 +32,8 @@ module.exports = async (client, message, event) => {
       case '.show':
         (async () => {
           let key = arg(1);
-          let c_save = await knex('c_save').where({ ownid, key });
-          client.sendMessage(jid, c_save.map(r => r.val).join('\n'), MessageType.text, { quoted: message });
+          let c_save = await knex('c_save').where({ ownid, key }).first();
+          client.sendMessage(jid, c_save.val, MessageType.text, { quoted: message });
         })();
         break;
 
@@ -58,14 +63,16 @@ module.exports = async (client, message, event) => {
       case '.loopformat':
         let format = incometxt.substr(arg(0).length+1);
         let listqselect = [];
+        let keys = [];
         format.split(' ').map(r => {
           if(['$no'].includes(r)) { // except
           } else if(r.replace(/[^a-zA-Z0-9$]/g, "")[0] == '$') {
             let key = r.substr(1).replace(/[^a-zA-Z0-9]/g, "");
-            listqselect.push(`max(case when key = '${key}' then val end) as "${key}"`); // todo: binding query
+            keys.push(key);
+            listqselect.push(knex.raw(`max(case when key = ? then val end) as "${key}"`, [ key ]));
           }
         });
-        let listcsave = await knex('c_save').select(knex.raw(listqselect.join(`, `))).groupBy('ownid');
+        let listcsave = await knex('c_save').select(listqselect).whereIn('key', keys).groupBy('ownid');
         let endlist = listcsave.map((r, i) => {
           let nformat = format
           nformat = nformat.replaceAll('$no', i+1);

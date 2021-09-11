@@ -66,34 +66,73 @@ module.exports = async (client, message, event) => {
         break;
 
       case '.invite':
-        if(arg(1)[0] == '@' || arg(1)[0] == '+') {
-          if(isGroup) {
-            let status = await conn.groupAdd(jid, [`${arg(1).substr(1)}@s.whatsapp.net`]);
+        if(isGroup) {
+          if(arg(1)[0] == '@' || arg(1)[0] == '+') {
+            client.groupAdd(jid, [`${arg(1).substr(1)}@c.us`]);
             client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
-        } else {
-          client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
-        }
+          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
         break;
-      
+
+      case '.kick':
+        if(isGroup) {
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin && arg(1)[0] == '@' || arg(1)[0] == '+') {
+            client.groupRemove(jid, [`${arg(1).substr(1)}@c.us`]);
+            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+          } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+        break;
+
+      case '.kickme':
+        if(isGroup) {
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            client.sendMessage(jid, 'heh admin gaboleh asal keluar!', MessageType.text, { quoted: message });
+          } else {
+            client.groupRemove(jid, [ownid]);
+          }
+        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+        break;
+
+      case '.members':
+        if(isGroup) {
+          const { participants } = await client.groupMetadata(jid);
+          console.log(participants);
+          let member = participants.map(r => `- ${(r.notify ? r.notify : '@'+r.id.replace('@c.us', ''))}`).join('\n');
+          client.sendMessage(jid, member, MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+        break;
+
       case '.invitelink':
         const code = await client.groupInviteCode(jid);
         client.sendMessage(jid, `https://chat.whatsapp.com/${code}`, MessageType.text, { quoted: message });
         break;
       
       case '.promote':
-        if(arg(1)[0] == '@' || arg(1)[0] == '+') {
-          if(isGroup) {
-            let status = await conn.groupMakeAdmin(jid, [`${arg(1).substr(1)}@s.whatsapp.net`]);
-            console.log(status);
+        if(isGroup) {
+          const { owner } = await client.groupMetadata(jid);
+          if(owner.split('@')[0] == ownid.split('@')[0] && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
+            client.groupMakeAdmin(jid, [`${arg(1).substr(1)}@c.us`]);
             client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
-        } else {
-          client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
-        }
+          } else if(owner.split('@')[0] != ownid.split('@')[0]) {
+            client.sendMessage(jid, 'hanya owner group yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
         break;
-      case '.aaa':
-        console.log(ownid);
+
+      case '.demote':
+        if(isGroup) {
+          const { owner } = await client.groupMetadata(jid);
+          if(owner.split('@')[0] == ownid.split('@')[0] && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
+            client.groupDemoteAdmin(jid, [`${arg(1).substr(1)}@c.us`]);
+            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+          } else if(owner.split('@')[0] != ownid.split('@')[0]) {
+            client.sendMessage(jid, 'hanya owner group yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
         break;
 
       case '.sleep':
@@ -113,13 +152,17 @@ module.exports = async (client, message, event) => {
           if(to[0] == '@' && !isNaN(parseInt(max)) && parseInt(max) <= 50) {
             client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
             for(let i = 0;i < parseInt(max);i++) {
-              console.log(['spamming', `${to.substr(1)}@s.whatsapp.net`, 'from', jid]);
-              client.sendMessage(`${to.substr(1)}@s.whatsapp.net`, val, MessageType.text);
+              console.log(['spamming', `${to.substr(1)}@c.us`, 'from', jid]);
+              client.sendMessage(`${to.substr(1)}@c.us`, val, MessageType.text);
             }
           } else {
             client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
           }
         })()
+        break;
+      
+      case '.help':
+        client.sendMessage(jid, 'belom ada!', MessageType.text, { quoted: message });
         break;
 
       case '.tes':

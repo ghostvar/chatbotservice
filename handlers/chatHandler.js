@@ -74,6 +74,25 @@ module.exports = async (client, message, event) => {
           }
         })();
         break;
+      
+      case '.removesesi':
+        (async () => {
+          let sesi = arg(1);
+          if(sesi) {
+            let c_sesi = await knex('c_sesi').where({ jid, sesi }).first();
+            if(c_sesi) {
+              await knex('c_sesi').where({ jid, sesi }).delete();
+              await knex('c_sesi_hadir').where({ jid, sesi }).delete();
+              client.sendMessage(jid, `sesi ${c_sesi.sesi} berhasil terhapus!`, MessageType.text, { quoted: message });
+            } else {
+              client.sendMessage(jid, `sesi ${c_sesi.sesi} tidak ditemukan!`, MessageType.text, { quoted: message });
+            }
+          } else {
+            client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+          }
+        })();
+        break;
+
       case '.listsesi':
         let c_sesi = await knex('c_sesi').where({ jid }).first();
         if(c_sesi.length > 0) {
@@ -82,6 +101,7 @@ module.exports = async (client, message, event) => {
           client.sendMessage(jid, 'tidak ada sesi tersimpan!', MessageType.text, { quoted: message });
         }
         break;
+
       case '.presensi':
       case '.hadiran':
       case '.hadir':

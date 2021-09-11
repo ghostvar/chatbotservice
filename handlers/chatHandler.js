@@ -53,10 +53,90 @@ module.exports = async (client, message, event) => {
         break;
 
       case '.addsesi':
+        (async () => {
+          let sesi = arg(1);
+          if(sesi) {
+            let c_sesi = await knex('c_sesi').where({ jid, sesi }).first();
+            if(c_sesi) {
+              /**
+               * todo: uuid instean of sesi, sesi sebagai keterangan saja
+               * todo: ubah atribut
+               *  - kunci hadir sesi hanya berlaku hari ini, 24jam, atau 1jam
+               *  - reply ketika presensi
+               */
+              await knex('c_sesi').where({ jid, sesi }).update({ updated_at: knex.fn.now() });
+            } else {
+              await knex('c_sesi').insert({ jid, sesi, created_at: knex.fn.now(), updated_at: knex.fn.now() });
+            }
+            client.sendMessage(jid, 'tersimpan!', MessageType.text, { quoted: message });
+          } else {
+            client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+          }
+        })();
         break;
       case '.listsesi':
+        let c_sesi = await knex('c_sesi').where({ jid }).first();
+        if(c_sesi.length > 0) {
+          client.sendMessage(jid, c_sesi.map(r => `- ${r.sesi}`).join('\n'), MessageType.text, { quoted: message });
+        } else {
+          client.sendMessage(jid, 'tidak ada sesi tersimpan!', MessageType.text, { quoted: message });
+        }
         break;
+      case '.presensi':
+      case '.hadiran':
       case '.hadir':
+        (async () => {
+          let sesi = arg(1);
+          if(sesi) {
+            let c_sesi = await knex('c_sesi').where({ jid, sesi }).first();
+            if(c_sesi) {
+              let c_sesi_hadir = await knex('c_sesi_hadir').where({ jid, sesi, ownid }).first();
+              if(c_sesi_hadir) {
+                await knex('c_sesi_hadir').where({ jid, sesi, ownid }).update({ updated_at: knex.fn.now() });
+              } else {
+                await knex('c_sesi_hadir').insert({ jid, sesi, ownid, created_at: knex.fn.now(), updated_at: knex.fn.now() });
+              }
+              client.sendMessage(jid, 'tersimpan', MessageType.text, { quoted: message });
+            } else {
+              client.sendMessage(jid, `sesi ${sesi} tidak ditemukan!`, MessageType.text, { quoted: message });
+            }
+          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+        })();
+        break;
+
+      case '.loopsesi':
+        (async () => {
+          let sesi = arg(1);
+          if(sesi) {
+            let c_sesi = await knex('c_sesi').where({ jid, sesi }).first();
+            if(c_sesi) {
+              let format = incometxt.substr(arg(0).length+arg(1).length+2);
+              let listqselect = [];
+              let keys = [];
+              format.split(' ').map(r => {
+                if(['$no'].includes(r)) { // except
+                } else if(r.replace(/[^a-zA-Z0-9$]/g, "")[0] == '$') {
+                  let key = r.substr(1).replace(/[^a-zA-Z0-9]/g, "");
+                  keys.push(key);
+                  listqselect.push(knex.raw(`max(case when key = ? then val end) as "${key}"`, [ key ]));
+                }
+              });
+              let listcsave = await knex('c_save').select(listqselect)
+                .join('c_sesi_hadir', 'c_sesi_hadir.ownid', 'c_save.ownid')
+                .where('c_sesi_hadir.sesi', sesi).whereIn('key', keys).groupBy('c_save.ownid');
+              let endlist = listcsave.map((r, i) => {
+                let nformat = format
+                nformat = nformat.replaceAll('$no', i+1);
+                for(let k in r)
+                  nformat = nformat.replaceAll(`$${k}`, r[k]);
+                return nformat;
+              }).join('\n');
+              client.sendMessage(jid, `${c_sesi.sesi}:\n${endlist}`, MessageType.text, { quoted: message });
+            } else {
+              client.sendMessage(jid, `sesi ${sesi} tidak ditemukan!`, MessageType.text, { quoted: message });
+            }
+          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+        })();
         break;
 
       case '.loop':
@@ -165,7 +245,7 @@ module.exports = async (client, message, event) => {
         client.sendMessage(jid, 'pong', MessageType.text, { quoted: message });
         break;
 
-      case '.spam':
+      case '.spam': // todo: tunggu respon dari sendMessage baru kirm lagi
         (() => {
           let to = arg(1);
           let max = arg(2);

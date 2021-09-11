@@ -1,10 +1,10 @@
 
 exports.up = function(knex) {
   return knex.schema.createTable('c_save', function (table) {
-    table.increments();
     table.string('ownid'); // nomor pengguna
     table.string('key');
     table.text('val');
+    table.primary(['ownid', 'key']);
     table.unique(['ownid', 'key']);
     table.timestamps();
   })

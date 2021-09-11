@@ -11,13 +11,11 @@ module.exports = async (client, message, event) => {
     const ownid = isGroup ? message.key.participant : jid;
     const incometxt = (message.message || {}).conversation || (message.message.extendedTextMessage || {}).text || '';
     const arg = (n) => incometxt.trim().split(' ')[n] || '';
-    // console.log(jid, isGroup, incometxt, message)
 
     switch(arg(0)) {
       case '.save':
         let key = arg(1);
         let val = incometxt.substr(arg(0).length+arg(1).length+2);
-        // console.log([name, value, jid, ownid]);
         if(key && val && ownid) {
           await knex('c_save').insert({ ownid, key, val });
           client.sendMessage(jid, 'tersimpan!', MessageType.text, { quoted: message });
@@ -25,7 +23,15 @@ module.exports = async (client, message, event) => {
           client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
         }
         break;
-      
+
+      case '.show':
+        (async () => {
+          let key = arg(1);
+          let c_save = await knex('c_save').where({ ownid, key });
+          client.sendMessage(jid, c_save.map(r => r.val).join('\n'), MessageType.text, { quoted: message });
+        })();
+        break;
+
       case '.saved':
         let c_save = await knex('c_save').where({ ownid });
         client.sendMessage(jid, c_save.map(r => `- ${r.key}`).join('\n'), MessageType.text, { quoted: message });
@@ -41,6 +47,14 @@ module.exports = async (client, message, event) => {
         client.sendMessage(jid, 'atribut berhasil dihapus!', MessageType.text, { quoted: message });
         break;
 
+      case '.addsesi':
+        break;
+      case '.listsesi':
+        break;
+      case '.hadir':
+        break;
+
+      case '.loop':
       case '.loopformat':
         let format = incometxt.substr(arg(0).length+1);
         let listqselect = [];
@@ -93,6 +107,7 @@ module.exports = async (client, message, event) => {
             client.sendMessage(jid, 'heh admin gaboleh asal keluar!', MessageType.text, { quoted: message });
           } else {
             client.groupRemove(jid, [ownid]);
+            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
           }
         } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
         break;

@@ -94,7 +94,7 @@ module.exports = async (client, message, event) => {
         break;
 
       case '.listsesi':
-        let c_sesi = await knex('c_sesi').where({ jid }).first();
+        let c_sesi = await knex('c_sesi').where({ jid });
         if(c_sesi.length > 0) {
           client.sendMessage(jid, c_sesi.map(r => `- ${r.sesi}`).join('\n'), MessageType.text, { quoted: message });
         } else {
@@ -199,8 +199,12 @@ module.exports = async (client, message, event) => {
         if(isGroup) {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin && arg(1)[0] == '@' || arg(1)[0] == '+') {
-            client.groupRemove(jid, [`${arg(1).substr(1)}@c.us`]);
-            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+            if(participants.filter(r => r.jid.split('@')[0] == arg(1).substr(1))[0].isAdmin) {
+              client.sendMessage(jid, 'masih jadi admin, kick ditolak!', MessageType.text, { quoted: message }); // perlu ga ya
+            } else {
+              client.groupRemove(jid, [`${arg(1).substr(1)}@c.us`]);
+              client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+            }
           } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
             client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
           } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
@@ -211,7 +215,7 @@ module.exports = async (client, message, event) => {
         if(isGroup) {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
-            client.sendMessage(jid, 'heh admin gaboleh asal keluar!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, 'anda seorang admin, keluar ditolak!', MessageType.text, { quoted: message });
           } else {
             client.groupRemove(jid, [ownid]);
             client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });

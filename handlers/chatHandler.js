@@ -9,6 +9,7 @@ module.exports = async (client, message, event) => {
   try {
     const isGroup = (jid.split('@')[1] || '') === 'g.us';
     const ownid = isGroup ? message.key.participant : jid;
+    const { quotedMessage } = (message.message.extendedTextMessage || {}).contextInfo || { quotedMessage: {} };
     const incometxt = (message.message || {}).conversation || (message.message.extendedTextMessage || {}).text || '';
     const arg = (n) => incometxt.trim().split(' ')[n] || '';
 
@@ -134,9 +135,11 @@ module.exports = async (client, message, event) => {
               let listqselect = [];
               let keys = [];
               format.split(' ').map(r => {
-                if(['$no'].includes(r)) { // except
-                } else if(r.replace(/[^a-zA-Z0-9$]/g, "")[0] == '$') {
-                  let key = r.substr(1).replace(/[^a-zA-Z0-9]/g, "");
+                let rr = r.replace(/[^a-zA-Z0-9_$]/g, "");
+                if(['$no'].includes(rr)) { // except
+                  return;
+                } else if(rr[0] == '$') {
+                  let key = r.substr(1).replace(/[^a-zA-Z0-9_]/g, "");
                   keys.push(key);
                   listqselect.push(knex.raw(`max(case when key = ? then val end) as "${key}"`, [ key ]));
                 }
@@ -146,9 +149,9 @@ module.exports = async (client, message, event) => {
                 .where('c_sesi_hadir.sesi', sesi).whereIn('key', keys).groupBy('c_save.ownid');
               let endlist = listcsave.map((r, i) => {
                 let nformat = format
-                nformat = nformat.replaceAll('$no', i+1);
                 for(let k in r)
                   nformat = nformat.replaceAll(`$${k}`, r[k]);
+                nformat = nformat.replaceAll('$no', i+1);
                 return nformat;
               }).join('\n');
               client.sendMessage(jid, `${c_sesi.sesi}:\n${endlist}`, MessageType.text, { quoted: message });
@@ -165,9 +168,11 @@ module.exports = async (client, message, event) => {
         let listqselect = [];
         let keys = [];
         format.split(' ').map(r => {
-          if(['$no'].includes(r)) { // except
-          } else if(r.replace(/[^a-zA-Z0-9$]/g, "")[0] == '$') {
-            let key = r.substr(1).replace(/[^a-zA-Z0-9]/g, "");
+          let rr = r.replace(/[^a-zA-Z0-9_$]/g, "");
+          if(['$no'].includes(rr)) { // except
+            return;
+          } else if(rr[0] == '$') {
+            let key = r.substr(1).replace(/[^a-zA-Z0-9_]/g, "");
             keys.push(key);
             listqselect.push(knex.raw(`max(case when key = ? then val end) as "${key}"`, [ key ]));
           }
@@ -175,9 +180,9 @@ module.exports = async (client, message, event) => {
         let listcsave = await knex('c_save').select(listqselect).whereIn('key', keys).groupBy('ownid');
         let endlist = listcsave.map((r, i) => {
           let nformat = format
-          nformat = nformat.replaceAll('$no', i+1);
           for(let k in r)
             nformat = nformat.replaceAll(`$${k}`, r[k]);
+          nformat = nformat.replaceAll('$no', i+1);
           return nformat;
         }).join('\n');
         client.sendMessage(jid, endlist, MessageType.text, { quoted: message });
@@ -270,7 +275,7 @@ module.exports = async (client, message, event) => {
         break;
 
       case '.spam': // todo: tunggu respon dari sendMessage baru kirm lagi
-        (() => {
+        (async () => {
           let to = arg(1);
           let max = arg(2);
           console.log(message);
@@ -279,7 +284,7 @@ module.exports = async (client, message, event) => {
             client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
             for(let i = 0;i < parseInt(max);i++) {
               console.log(['spamming', `${to.substr(1)}@c.us`, 'from', jid]);
-              client.sendMessage(`${to.substr(1)}@c.us`, val, MessageType.text);
+              await client.sendMessage(`${to.substr(1)}@c.us`, val, MessageType.text);
             }
           } else {
             client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
@@ -303,7 +308,7 @@ module.exports = async (client, message, event) => {
           }, MessageType.buttonsMessage, { quoted: message });
         break;
 
-      case 'verify': // force
+      case '.verify': // force
       default:
         console.log([jid, message]);
         const verify = await knex('verification').select('verification.*', 'apps.webhook_url')

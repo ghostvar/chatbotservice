@@ -15,7 +15,8 @@
     "express": "^4.17.1",
     "knex": "^0.95.7",
     "pg": "^8.6.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "wa-sticker-formatter": "github:alensaito1/wa-sticker-formatter"
   },
   "devDependencies": {
     "nodemon": "^2.0.9"

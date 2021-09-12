@@ -2,7 +2,10 @@ require('dotenv').config();
 const knex = require('../services/knex');
 const axios = require('axios');
 const { MessageType } = require('@adiwajshing/baileys');
+const { createSticker, Sticker } = require('wa-sticker-formatter');
 const uuid = require('uuid');
+const URL = require("url").URL;
+const fs = require('fs');
 
 module.exports = async (client, message, event) => {
   const { jid } = event;
@@ -244,8 +247,8 @@ module.exports = async (client, message, event) => {
       
       case '.promote':
         if(isGroup) {
-          const { owner } = await client.groupMetadata(jid);
-          if(owner.split('@')[0] == ownid.split('@')[0] && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
             client.groupMakeAdmin(jid, [`${arg(1).substr(1)}@c.us`]);
             client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
           } else if(owner.split('@')[0] != ownid.split('@')[0]) {
@@ -256,14 +259,46 @@ module.exports = async (client, message, event) => {
 
       case '.demote':
         if(isGroup) {
-          const { owner } = await client.groupMetadata(jid);
-          if(owner.split('@')[0] == ownid.split('@')[0] && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
             client.groupDemoteAdmin(jid, [`${arg(1).substr(1)}@c.us`]);
             client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
           } else if(owner.split('@')[0] != ownid.split('@')[0]) {
             client.sendMessage(jid, 'hanya owner group yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
           } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
         } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+        break;
+
+      case '.stiker':
+      case '.sticker':
+        if(quotedMessage && Object.keys(quotedMessage).length > 0) {
+          const messageType = Object.keys (quotedMessage)[0];
+          let bufferdata;
+          if (messageType !== MessageType.text && messageType !== MessageType.extendedText) {
+            bufferdata = await client.downloadMediaMessage({ message: quotedMessage });
+          } else {
+            try {
+              new URL(s);
+              bufferdata = quotedMessage.conversation;
+            } catch (err) {
+              client.sendMessage(jid, 'Reply pesan [foto,video,gif,url] untuk dapat membuat stiker!', MessageType.text, { quoted: message });
+            }        
+          }
+
+          if(bufferdata) {
+            // const savedFilename = await client.downloadAndSaveMediaMessage({ message: quotedMessage });
+            // const b = await client.downloadMediaMessage({ message: quotedMessage });
+            // fs.writeFile("test.mp4", b,  "binary",function(err) { });
+            const stickerMetadata = {
+              type: 'full',
+              pack: arg(1) || 'random',
+              author: arg(2) || 'manusia',
+              categories: [(arg(3) || '🗿')]
+            }
+            const sticker = await new Sticker(bufferdata, stickerMetadata).build()
+            await client.sendMessage(jid, sticker, MessageType.sticker, { quoted: message });
+          }
+        } else client.sendMessage(jid, 'Reply pesan [foto,video,gif,url] untuk dapat membuat stiker!', MessageType.text, { quoted: message });
         break;
 
       case '.sleep':
@@ -293,7 +328,14 @@ module.exports = async (client, message, event) => {
         break;
       
       case '.help':
-        client.sendMessage(jid, 'belom ada!', MessageType.text, { quoted: message });
+        let perintah = [
+          'Perintah tersedia: ',
+          '- user atribut (.save, .saved, .remove, .removeall, .show)',
+          '- tag sesi (.addsesi, .loopsesi, .removesesi, .hadir)',
+          '- listing (.loop, .loopformat)',
+          '- stikers (.stiker, .sticker)'
+        ];
+        client.sendMessage(jid, perintah.join('\n'), MessageType.text, { quoted: message });
         break;
 
       case '.tes':
@@ -310,7 +352,10 @@ module.exports = async (client, message, event) => {
 
       case '.verify': // force
       default:
-        console.log([jid, message]);
+        if(arg(0)[0] == '.') {
+          client.sendMessage(jid, 'maap gapaham, perintah tidak diketahui.', MessageType.text, { quoted: message });
+        }
+
         const verify = await knex('verification').select('verification.*', 'apps.webhook_url')
         .join('apps', 'apps.id', '=', 'verification.appid')
         .where({ token: incometxt }).first();

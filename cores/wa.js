@@ -26,6 +26,10 @@ async function connectToWhatsApp() {
     } //else console.log(event) // see updates (can be archived, pinned etc.)
   });
 
+  conn.on('group-participants-update', async (event) => {
+    // welcome & goodbye
+  });
+
   Emiter.on('sendMessage', ({ jid, text }) => {
     // event pesan dari api
     conn.sendMessage(jid, text, MessageType.text);

@@ -12,8 +12,9 @@ module.exports = async (client, message, event) => {
   try {
     const isGroup = (jid.split('@')[1] || '') === 'g.us';
     const ownid = isGroup ? message.key.participant : jid;
-    const { quotedMessage } = (message.message.extendedTextMessage || {}).contextInfo || { quotedMessage: {} };
-    const incometxt = (message.message || {}).conversation || (message.message.extendedTextMessage || {}).text || '';
+    const messageObj = message.message || {};
+    const { quotedMessage } = (messageObj.extendedTextMessage || {}).contextInfo || { quotedMessage: {} };
+    const incometxt = messageObj.conversation || (messageObj.imageMessage || {}).caption || (messageObj.extendedTextMessage || {}).text || '';
     const arg = (n) => incometxt.trim().split(' ')[n] || '';
 
     switch(arg(0)) {
@@ -271,34 +272,35 @@ module.exports = async (client, message, event) => {
 
       case '.stiker':
       case '.sticker':
-        if(quotedMessage && Object.keys(quotedMessage).length > 0) {
+        let bufferdata;
+        if (Object.keys(message) !== MessageType.text && Object.keys(message) !== MessageType.extendedText) {
+          bufferdata = await client.downloadMediaMessage(message);
+        } else if(quotedMessage && Object.keys(quotedMessage).length > 0) {
           const messageType = Object.keys (quotedMessage)[0];
-          let bufferdata;
           if (messageType !== MessageType.text && messageType !== MessageType.extendedText) {
             bufferdata = await client.downloadMediaMessage({ message: quotedMessage });
           } else {
             try {
               new URL(s);
               bufferdata = quotedMessage.conversation;
-            } catch (err) {
-              client.sendMessage(jid, 'Reply pesan [foto,video,gif,url] untuk dapat membuat stiker!', MessageType.text, { quoted: message });
-            }        
+            } catch (err) {}
           }
-
-          if(bufferdata) {
-            // const savedFilename = await client.downloadAndSaveMediaMessage({ message: quotedMessage });
-            // const b = await client.downloadMediaMessage({ message: quotedMessage });
-            // fs.writeFile("test.mp4", b,  "binary",function(err) { });
-            const stickerMetadata = {
-              type: 'full',
-              pack: arg(1) || 'random',
-              author: arg(2) || 'manusia',
-              categories: [(arg(3) || '🗿')]
-            }
-            const sticker = await new Sticker(bufferdata, stickerMetadata).build()
-            await client.sendMessage(jid, sticker, MessageType.sticker, { quoted: message });
+        }
+        if(bufferdata) {
+          // const savedFilename = await client.downloadAndSaveMediaMessage({ message: quotedMessage });
+          // const b = await client.downloadMediaMessage({ message: quotedMessage });
+          // fs.writeFile("test.mp4", b,  "binary",function(err) { });
+          const stickerMetadata = {
+            type: 'full',
+            pack: arg(1) || 'random',
+            author: arg(2) || 'manusia',
+            categories: [(arg(3) || '🗿')]
           }
-        } else client.sendMessage(jid, 'Reply pesan [foto,video,gif,url] untuk dapat membuat stiker!', MessageType.text, { quoted: message });
+          const sticker = await new Sticker(bufferdata, stickerMetadata).build()
+          await client.sendMessage(jid, sticker, MessageType.sticker, { quoted: message });
+        } else {
+          client.sendMessage(jid, 'Kirim atau reply pesan [foto,video,gif,url] untuk dapat membuat stiker!', MessageType.text, { quoted: message });
+        }
         break;
 
       case '.sleep':

@@ -6,6 +6,7 @@ const fs = require('fs');
 
 async function connectToWhatsApp() {
   const conn = new WAConnection();
+  conn.connectOptions.maxRetries = 60 * 24; // one day
 
   // session keys
   if(fs.existsSync('./whatsapp.key.json')) {

@@ -14,7 +14,8 @@ const chatHandler = async (client, message, event) => {
     const ownid = isGroup ? message.key.participant : jid;
     const messageObj = message.message || {};
     const quotedMessage = ((messageObj.extendedTextMessage || {}).contextInfo || {}).quotedMessage || {} ;
-    const incometxt = messageObj.conversation || (messageObj.imageMessage || {}).caption || (messageObj.extendedTextMessage || {}).text || (messageObj.buttonsResponseMessage || {}).selectedButtonId || '';
+    let rawincometxt = messageObj.conversation || (messageObj.imageMessage || {}).caption || (messageObj.extendedTextMessage || {}).text || (messageObj.buttonsResponseMessage || {}).selectedButtonId || '';
+    const incometxt = rawincometxt[0] == '#' && rawincometxt !== '#' ? rawincometxt = '.getnote ' + rawincometxt.substr(1) : rawincometxt; // aliases # as .getnote
     const arg = (n) => incometxt.trim().split(' ')[n] || '';
 
     switch(arg(0)) {
@@ -61,6 +62,7 @@ const chatHandler = async (client, message, event) => {
         break;
 
       case '.addsesi':
+      case '.setsesi':
         (async () => {
           let sesi = arg(1);
           if(sesi) {
@@ -216,6 +218,92 @@ const chatHandler = async (client, message, event) => {
         break;
       
       case '.notes':
+        async function listNotes() {
+          let c_notes = await knex('c_notes').select('name').where('jid', jid);
+          let endnote = c_notes.map(r => `- ${r.name}`).join('\n');
+          if(c_notes.length > 0) {
+            client.sendMessage(jid, endnote, MessageType.text, { quoted: message });
+          } else {
+            client.sendMessage(jid, '_tidak terdapat catatan tersimpan!_', MessageType.text, { quoted: message });
+          }
+        }
+        if(isGroup) {
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            await listNotes();
+          } else client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+        } else {
+          await listNotes();
+        }
+        break;
+
+      case '.setnote':
+        async function setNote() {
+          let notename = arg(1);
+          let note = incometxt.substr(arg(0).length+arg(1).length+2);
+          if(notename && note) {
+            let c_note = await knex('c_notes').where('jid', jid).where('name', notename);
+            if(c_note.length > 0) {
+              await knex('c_notes').update({ note, updated_at: knex.fn.now() }).where('jid', jid).where('name', notename);
+            } else {
+              await knex('c_notes').insert({ jid, name: notename, note, created_at: knex.fn.now(), updated_at: knex.fn.now() });
+            }
+            client.sendMessage(jid, 'tersimpan!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+        }
+        if(isGroup) {
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            await setNote();
+          } else client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+        } else {
+          await setNote();
+        }
+        break;
+
+      case '.getnote':
+        async function getNote() {
+          let notename = arg(1);
+          if(notename) {
+            let c_note = await knex('c_notes').where('jid', jid).where('name', notename).first();
+            if(c_note) {
+              client.sendMessage(jid, c_note.note, MessageType.text, { quoted: message });
+            } else {
+              client.sendMessage(jid, `catatan ${notename} tidak ditemukan!`, MessageType.text, { quoted: message });
+            }
+          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+        }
+        if(isGroup) {
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            await getNote();
+          } else client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+        } else {
+          await getNote();
+        }
+        break;
+      
+      case '.removenote':
+        async function delNote() {
+          let notename = arg(1);
+          if(notename) {
+            let c_note = await knex('c_notes').where('jid', jid).where('name', notename).first();
+            if(c_note) {
+              await knex('c_notes').where('jid', jid).where('name', notename).delete();
+              client.sendMessage(jid, `catatan ${notename} berhasil terhapus!`, MessageType.text, { quoted: message });
+            } else {
+              client.sendMessage(jid, `tidak terdapat catatan ${notename}!`, MessageType.text, { quoted: message });
+            }
+          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+        }
+        if(isGroup) {
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            await delNote();
+          } else client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+        } else {
+          await delNote();
+        }
         break;
 
       case '.setprofile':

@@ -13,7 +13,7 @@ const chatHandler = async (client, message, event) => {
     const isGroup = (jid.split('@')[1] || '') === 'g.us';
     const ownid = isGroup ? message.key.participant : jid;
     const messageObj = message.message || {};
-    const { quotedMessage } = (messageObj.extendedTextMessage || {}).contextInfo || { quotedMessage: {} };
+    const quotedMessage = ((messageObj.extendedTextMessage || {}).contextInfo || {}).quotedMessage || {} ;
     const incometxt = messageObj.conversation || (messageObj.imageMessage || {}).caption || (messageObj.extendedTextMessage || {}).text || (messageObj.buttonsResponseMessage || {}).selectedButtonId || '';
     const arg = (n) => incometxt.trim().split(' ')[n] || '';
 
@@ -198,7 +198,12 @@ const chatHandler = async (client, message, event) => {
           }
         });
         if(keys.length > 0) {
-          let listcsave = await knex('c_save').select(listqselect).whereIn('key', keys).groupBy('ownid');
+          let onlys = [ownid];
+          if(isGroup) {
+            const { participants } = await client.groupMetadata(jid);
+            onlys = participants.map(r => r.jid);
+          }
+          let listcsave = await knex('c_save').select(listqselect).whereIn('key', keys).whereIn('ownid', onlys).groupBy('ownid');
           let endlist = listcsave.map((r, i) => {
             let nformat = format
             for(let k in r)
@@ -300,7 +305,6 @@ const chatHandler = async (client, message, event) => {
       case '.members':
         if(isGroup) {
           const { participants } = await client.groupMetadata(jid);
-          console.log(participants);
           let member = participants.map(r => `- ${(r.notify ? r.notify : '@'+r.id.replace('@c.us', ''))}`).join('\n');
           client.sendMessage(jid, member, MessageType.text, { quoted: message });
         } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });

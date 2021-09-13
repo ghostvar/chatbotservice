@@ -367,6 +367,13 @@ const chatHandler = async (client, message, event) => {
 
       case '.verify': // force
       default:
+        if(incometxt.includes('sialan')) // todo: filters
+          client.sendMessage(jid, 'mulai toxic, mau kick?', MessageType.text, { quoted: message });
+
+        if(Object.keys(quotedMessage).length && incometxt == 'tau siapa?') { // todo: auto when reply
+          client.sendMessage(jid, 'ntahlah', MessageType.text, { quoted: message });
+        }
+
         if(arg(0)[0] == '.' && arg(0) !== '.') {
           client.sendMessage(jid, 'maap gapaham, perintah tidak diketahui.', MessageType.text, { quoted: message });
         }

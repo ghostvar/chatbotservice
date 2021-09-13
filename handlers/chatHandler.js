@@ -208,6 +208,25 @@ const chatHandler = async (client, message, event) => {
       case '.notes':
         break;
 
+      case '.setprofile':
+        if(isGroup) {
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            const msg = Object.keys(quotedMessage).length > 0 ? quotedMessage : messageObj;
+            const messageType = Object.keys (msg)[0];
+            if (messageType === MessageType.image || messageType === MessageType.imageMessage) {
+              let bufferdata = await client.downloadMediaMessage({ message: msg });
+              await client.updateProfilePicture(jid, bufferdata);
+              client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+            } else {
+              client.sendMessage(jid, 'hanya menerima pesan berbentuk gambar!', MessageType.text, { quoted: message });
+            }
+          } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+        break;
+
       case '.invite':
         if(isGroup) {
           if(arg(1)[0] == '@' || arg(1)[0] == '+') {

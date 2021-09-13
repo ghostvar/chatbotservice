@@ -217,7 +217,7 @@ const chatHandler = async (client, message, event) => {
         } else client.sendMessage(jid, '_format tidak valid!_', MessageType.text, { quoted: message });
         break;
       
-      case '.notes':
+      case '.notes': // todo: menggunaakn listMessage
         async function listNotes() {
           let c_notes = await knex('c_notes').select('name').where('jid', jid);
           let endnote = c_notes.map(r => `- ${r.name}`).join('\n');
@@ -237,7 +237,7 @@ const chatHandler = async (client, message, event) => {
         }
         break;
 
-      case '.setnote':
+      case '.setnote': // todo: buat catatan dari reply pesan & support pesan gambar, video, dll.
         async function setNote() {
           let notename = arg(1);
           let note = incometxt.substr(arg(0).length+arg(1).length+2);

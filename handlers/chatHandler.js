@@ -540,7 +540,7 @@ const chatHandler = async (client, message, event) => {
     }
   } catch (error) {
     console.error(error);
-    client.sendMessage(jid, 'terjadi kesalahan!', MessageType.text, { quoted: message });
+    client.sendMessage(jid, '_terjadi kesalahan!_', MessageType.text, { quoted: message });
   }
 }
 

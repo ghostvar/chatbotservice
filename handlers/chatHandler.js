@@ -29,9 +29,9 @@ const chatHandler = async (client, message, event) => {
           } else {
             await knex('c_save').insert({ ownid, key, val, created_at: knex.fn.now(), updated_at: knex.fn.now() });
           }
-          client.sendMessage(jid, 'tersimpan!', MessageType.text, { quoted: message });
+          client.sendMessage(jid, '_tersimpan!_', MessageType.text, { quoted: message });
         } else {
-          client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+          client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
         }
         break;
 
@@ -42,7 +42,7 @@ const chatHandler = async (client, message, event) => {
           if(c_save)
             client.sendMessage(jid, c_save.val, MessageType.text, { quoted: message });
           else
-            client.sendMessage(jid, `tidak terdapat '${key}' tersimpan`, MessageType.text, { quoted: message });
+            client.sendMessage(jid, `_tidak terdapat '${key}' tersimpan_`, MessageType.text, { quoted: message });
         })();
         break;
 
@@ -53,12 +53,12 @@ const chatHandler = async (client, message, event) => {
 
       case '.removeall':
         await knex('c_save').where({ ownid }).delete();
-        client.sendMessage(jid, 'berhasil hapus semua!', MessageType.text, { quoted: message });
+        client.sendMessage(jid, '_berhasil hapus semua!_', MessageType.text, { quoted: message });
         break;
 
       case '.remove':
         await knex('c_save').where({ ownid, key: arg(1) }).delete();
-        client.sendMessage(jid, 'atribut berhasil dihapus!', MessageType.text, { quoted: message });
+        client.sendMessage(jid, '_atribut berhasil dihapus!_', MessageType.text, { quoted: message });
         break;
 
       case '.addsesi':
@@ -102,12 +102,12 @@ const chatHandler = async (client, message, event) => {
             if(c_sesi) {
               await knex('c_sesi').where({ jid, sesi }).delete();
               await knex('c_sesi_hadir').where({ jid, sesi }).delete();
-              client.sendMessage(jid, `sesi ${c_sesi.sesi} berhasil terhapus!`, MessageType.text, { quoted: message });
+              client.sendMessage(jid, `_sesi ${c_sesi.sesi} berhasil terhapus!_`, MessageType.text, { quoted: message });
             } else {
-              client.sendMessage(jid, `sesi ${c_sesi.sesi} tidak ditemukan!`, MessageType.text, { quoted: message });
+              client.sendMessage(jid, `_sesi ${c_sesi.sesi} tidak ditemukan!_`, MessageType.text, { quoted: message });
             }
           } else {
-            client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
           }
         })();
         break;
@@ -117,7 +117,7 @@ const chatHandler = async (client, message, event) => {
         if(c_sesi.length > 0) {
           client.sendMessage(jid, c_sesi.map(r => `- ${r.sesi}`).join('\n'), MessageType.text, { quoted: message });
         } else {
-          client.sendMessage(jid, 'tidak ada sesi tersimpan!', MessageType.text, { quoted: message });
+          client.sendMessage(jid, '_tidak ada sesi tersimpan!_', MessageType.text, { quoted: message });
         }
         break;
 
@@ -135,11 +135,11 @@ const chatHandler = async (client, message, event) => {
               } else {
                 await knex('c_sesi_hadir').insert({ jid, sesi, ownid, created_at: knex.fn.now(), updated_at: knex.fn.now() });
               }
-              client.sendMessage(jid, 'tersimpan', MessageType.text, { quoted: message });
+              client.sendMessage(jid, '_tersimpan!_', MessageType.text, { quoted: message });
             } else {
-              client.sendMessage(jid, `sesi ${sesi} tidak ditemukan!`, MessageType.text, { quoted: message });
+              client.sendMessage(jid, `_sesi ${sesi} tidak ditemukan!_`, MessageType.text, { quoted: message });
             }
-          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
         })();
         break;
 
@@ -178,9 +178,9 @@ const chatHandler = async (client, message, event) => {
               }).join('\n');
               client.sendMessage(jid, `${c_sesi.sesi}:\n${endlist}`, MessageType.text, { quoted: message });
             } else {
-              client.sendMessage(jid, `sesi ${sesi} tidak ditemukan!`, MessageType.text, { quoted: message });
+              client.sendMessage(jid, `_sesi ${sesi} tidak ditemukan!_`, MessageType.text, { quoted: message });
             }
-          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
         })();
         break;
 
@@ -214,7 +214,7 @@ const chatHandler = async (client, message, event) => {
             return nformat;
           }).join('\n');
           client.sendMessage(jid, endlist, MessageType.text, { quoted: message });
-        } else client.sendMessage(jid, 'format tidak valid!', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_format tidak valid!_', MessageType.text, { quoted: message });
         break;
       
       case '.notes':
@@ -231,7 +231,7 @@ const chatHandler = async (client, message, event) => {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
             await listNotes();
-          } else client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_hanya admin yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
         } else {
           await listNotes();
         }
@@ -248,14 +248,14 @@ const chatHandler = async (client, message, event) => {
             } else {
               await knex('c_notes').insert({ jid, name: notename, note, created_at: knex.fn.now(), updated_at: knex.fn.now() });
             }
-            client.sendMessage(jid, 'tersimpan!', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_tersimpan!_', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
         }
         if(isGroup) {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
             await setNote();
-          } else client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_hanya admin yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
         } else {
           await setNote();
         }
@@ -269,15 +269,15 @@ const chatHandler = async (client, message, event) => {
             if(c_note) {
               client.sendMessage(jid, c_note.note, MessageType.text, { quoted: message });
             } else {
-              client.sendMessage(jid, `catatan ${notename} tidak ditemukan!`, MessageType.text, { quoted: message });
+              client.sendMessage(jid, `_catatan ${notename} tidak ditemukan!_`, MessageType.text, { quoted: message });
             }
-          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
         }
         if(isGroup) {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
             await getNote();
-          } else client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_hanya admin yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
         } else {
           await getNote();
         }
@@ -290,17 +290,17 @@ const chatHandler = async (client, message, event) => {
             let c_note = await knex('c_notes').where('jid', jid).where('name', notename).first();
             if(c_note) {
               await knex('c_notes').where('jid', jid).where('name', notename).delete();
-              client.sendMessage(jid, `catatan ${notename} berhasil terhapus!`, MessageType.text, { quoted: message });
+              client.sendMessage(jid, `_catatan ${notename} berhasil terhapus!_`, MessageType.text, { quoted: message });
             } else {
-              client.sendMessage(jid, `tidak terdapat catatan ${notename}!`, MessageType.text, { quoted: message });
+              client.sendMessage(jid, `_tidak terdapat catatan ${notename}!_`, MessageType.text, { quoted: message });
             }
-          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
         }
         if(isGroup) {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
             await delNote();
-          } else client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_hanya admin yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
         } else {
           await delNote();
         }
@@ -315,14 +315,14 @@ const chatHandler = async (client, message, event) => {
             if (messageType === MessageType.image || messageType === MessageType.imageMessage) {
               let bufferdata = await client.downloadMediaMessage({ message: msg });
               await client.updateProfilePicture(jid, bufferdata);
-              client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+              client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
             } else {
-              client.sendMessage(jid, 'hanya menerima pesan berbentuk gambar!', MessageType.text, { quoted: message });
+              client.sendMessage(jid, '_hanya menerima pesan berbentuk gambar!_', MessageType.text, { quoted: message });
             }
           } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
-            client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
-        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_hanya admin yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_permintaan ditolak!_', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_harus berada dalam group!_', MessageType.text, { quoted: message });
         break;
 
       case '.setname':
@@ -332,11 +332,11 @@ const chatHandler = async (client, message, event) => {
           if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
             let title = incometxt.substr(arg(0).length+1);
             await client.groupUpdateSubject(jid, title);
-            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
           } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
-            client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
-        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_hanya admin yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_permintaan ditolak!_', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_harus berada dalam group!_', MessageType.text, { quoted: message });
         break;
 
       case '.setdesc':
@@ -345,11 +345,11 @@ const chatHandler = async (client, message, event) => {
           if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
             let desc = incometxt.substr(arg(0).length+1);
             await client.groupUpdateDescription(jid, desc);
-            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
           } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
-            client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
-        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_hanya admin yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_permintaan ditolak!_', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_harus berada dalam group!_', MessageType.text, { quoted: message });
         break;
         
 
@@ -357,9 +357,9 @@ const chatHandler = async (client, message, event) => {
         if(isGroup) {
           if(arg(1)[0] == '@' || arg(1)[0] == '+') {
             client.groupAdd(jid, [`${arg(1).substr(1)}@c.us`]);
-            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
-        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_harus berada dalam group!_', MessageType.text, { quoted: message });
         break;
 
       case '.kick':
@@ -367,27 +367,27 @@ const chatHandler = async (client, message, event) => {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin && arg(1)[0] == '@' || arg(1)[0] == '+') {
             if(participants.filter(r => r.jid.split('@')[0] == arg(1).substr(1))[0].isAdmin) {
-              client.sendMessage(jid, 'masih jadi admin, kick ditolak!', MessageType.text, { quoted: message }); // perlu ga ya
+              client.sendMessage(jid, '_masih jadi admin, kick ditolak!+', MessageType.text, { quoted: message }); // perlu ga ya
             } else {
               client.groupRemove(jid, [`${arg(1).substr(1)}@c.us`]);
-              client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+              client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
             }
           } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
-            client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
-        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_hanya admin yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_permintaan ditolak!_', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_harus berada dalam group!_', MessageType.text, { quoted: message });
         break;
 
       case '.kickme':
         if(isGroup) {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
-            client.sendMessage(jid, 'anda seorang admin, keluar ditolak!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_anda seorang admin, keluar ditolak!_', MessageType.text, { quoted: message });
           } else {
             client.groupRemove(jid, [ownid]);
-            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
           }
-        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_harus berada dalam group!_', MessageType.text, { quoted: message });
         break;
 
       case '.members':
@@ -395,7 +395,7 @@ const chatHandler = async (client, message, event) => {
           const { participants } = await client.groupMetadata(jid);
           let member = participants.map(r => `- ${(r.notify ? r.notify : '@'+r.id.replace('@c.us', ''))}`).join('\n');
           client.sendMessage(jid, member, MessageType.text, { quoted: message });
-        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_harus berada dalam group!_', MessageType.text, { quoted: message });
         break;
 
       case '.invitelink':
@@ -408,11 +408,11 @@ const chatHandler = async (client, message, event) => {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
             client.groupMakeAdmin(jid, [`${arg(1).substr(1)}@c.us`]);
-            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
           } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
-            client.sendMessage(jid, 'hanya owner group yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
-        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_hanya owner group yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_permintaan ditolak!_', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_harus berada dalam group!_', MessageType.text, { quoted: message });
         break;
 
       case '.demote':
@@ -420,11 +420,11 @@ const chatHandler = async (client, message, event) => {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
             client.groupDemoteAdmin(jid, [`${arg(1).substr(1)}@c.us`]);
-            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
           } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
-            client.sendMessage(jid, 'hanya owner group yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
-        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_hanya owner group yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, '_permintaan ditolak!_', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_harus berada dalam group!_', MessageType.text, { quoted: message });
         break;
 
       case '.stiker':
@@ -456,16 +456,16 @@ const chatHandler = async (client, message, event) => {
           const sticker = await new Sticker(bufferdata, stickerMetadata).build()
           await client.sendMessage(jid, sticker, MessageType.sticker, { quoted: message });
         } else {
-          client.sendMessage(jid, 'Kirim atau reply pesan [foto,video,gif,url] untuk dapat membuat stiker!', MessageType.text, { quoted: message });
+          client.sendMessage(jid, '_Kirim atau reply pesan [foto,video,gif,url] untuk dapat membuat stiker!_', MessageType.text, { quoted: message });
         }
         break;
 
       case '.sleep':
-        client.sendMessage(jid, 'Zzz... zzz... zzz....', MessageType.text, { quoted: message });
+        client.sendMessage(jid, '_Zzz... zzz... zzz...._', MessageType.text, { quoted: message });
         break;
 
       case '.ping':
-        client.sendMessage(jid, 'pong', MessageType.text, { quoted: message });
+        client.sendMessage(jid, '_Pyon!!_', MessageType.text, { quoted: message });
         break;
 
       case '.spam': // todo: tunggu respon dari sendMessage baru kirm lagi
@@ -475,13 +475,13 @@ const chatHandler = async (client, message, event) => {
           console.log(message);
           let val = incometxt.substr(arg(0).length+arg(1).length+arg(2).length+2);
           if(to[0] == '@' && !isNaN(parseInt(max)) && parseInt(max) <= 50) {
-            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
             for(let i = 0;i < parseInt(max);i++) {
               console.log(['spamming', `${to.substr(1)}@c.us`, 'from', jid]);
               await client.sendMessage(`${to.substr(1)}@c.us`, val, MessageType.text);
             }
           } else {
-            client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
           }
         })()
         break;
@@ -524,7 +524,7 @@ const chatHandler = async (client, message, event) => {
         }
 
         if(arg(0)[0] == '.' && arg(0) !== '.') {
-          client.sendMessage(jid, 'maap gapaham, perintah tidak diketahui.', MessageType.text, { quoted: message });
+          client.sendMessage(jid, '_maap gapaham, perintah tidak diketahui._', MessageType.text, { quoted: message });
         }
 
         const verify = await knex('verification').select('verification.*', 'apps.webhook_url')

@@ -373,15 +373,20 @@ const chatHandler = async (client, message, event) => {
         break;
 
       case '.tes':
-          client.sendMessage(jid, {
-            contentText: "Hi it's button message",
-            footerText: 'Hello World',
-            buttons: [
-              {buttonId: 'id1', buttonText: {displayText: 'Button 1'}, type: 1},
-              {buttonId: 'id2', buttonText: {displayText: 'Button 2'}, type: 1}
-            ],
-            headerType: 1
-          }, MessageType.buttonsMessage, { quoted: message });
+        client.sendMessage(jid, {
+          buttonText: 'Click Me!',
+          description: "Hello it's list message",
+          sections: [
+            {
+              title: "Section 1",
+              rows: [
+                { title: 'Row 1', description: "Hello it's description 1", rowId:"rowid1" },
+                { title: 'Row 2', description: "Hello it's description 2", rowId:"rowid2" }
+              ]
+            }
+          ],
+          listType: 1
+        }, MessageType.listMessage, { quoted: message });
         break;
 
       case '.verify': // force

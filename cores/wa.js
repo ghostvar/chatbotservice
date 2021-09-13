@@ -1,6 +1,6 @@
 require('dotenv').config();
 const chatHandler = require('../handlers/chatHandler');
-const Emiter = require('../services/eventEmiter');
+const { Emiter } = require('../services/eventEmiter');
 const { WAConnection, MessageType } = require('@adiwajshing/baileys');
 const fs = require('fs');
 

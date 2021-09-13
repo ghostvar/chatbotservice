@@ -1,4 +1,4 @@
-const Emiter = require('../services/eventEmiter');
+const { Emiter } = require('../services/eventEmiter');
 const knex = require('../services/knex');
 
 module.exports = {

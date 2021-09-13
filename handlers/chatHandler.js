@@ -7,14 +7,14 @@ const uuid = require('uuid');
 const URL = require("url").URL;
 const fs = require('fs');
 
-module.exports = async (client, message, event) => {
+const chatHandler = async (client, message, event) => {
   const { jid } = event;
   try {
     const isGroup = (jid.split('@')[1] || '') === 'g.us';
     const ownid = isGroup ? message.key.participant : jid;
     const messageObj = message.message || {};
     const { quotedMessage } = (messageObj.extendedTextMessage || {}).contextInfo || { quotedMessage: {} };
-    const incometxt = messageObj.conversation || (messageObj.imageMessage || {}).caption || (messageObj.extendedTextMessage || {}).text || '';
+    const incometxt = messageObj.conversation || (messageObj.imageMessage || {}).caption || (messageObj.extendedTextMessage || {}).text || (messageObj.buttonsResponseMessage || {}).selectedButtonId || '';
     const arg = (n) => incometxt.trim().split(' ')[n] || '';
 
     switch(arg(0)) {
@@ -65,6 +65,7 @@ module.exports = async (client, message, event) => {
             if(c_sesi) {
               /**
                * todo: uuid instean of sesi, sesi sebagai keterangan saja
+               * todo: buat tombol untuk melakukan presensi X
                * todo: ubah atribut
                *  - kunci hadir sesi hanya berlaku hari ini, 24jam, atau 1jam
                *  - reply ketika presensi
@@ -73,7 +74,15 @@ module.exports = async (client, message, event) => {
             } else {
               await knex('c_sesi').insert({ jid, sesi, created_at: knex.fn.now(), updated_at: knex.fn.now() });
             }
-            client.sendMessage(jid, 'tersimpan!', MessageType.text, { quoted: message });
+            // client.sendMessage(jid, 'sesi dibuat!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, {
+              contentText: `Sesi ${sesi}.`,
+              footerText: 'klik tombol atau jawab .hadir <nama_sesi> untuk Presensi!',
+              buttons: [
+                { buttonId: `.hadir ${sesi}`, buttonText: { displayText: 'Hadir ✋' }, type: 1 }
+              ],
+              headerType: 1
+            }, MessageType.buttonsMessage, { quoted: message });
           } else {
             client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
           }
@@ -148,14 +157,18 @@ module.exports = async (client, message, event) => {
                   listqselect.push(knex.raw(`max(case when key = ? then val end) as "${key}"`, [ key ]));
                 }
               });
+              listqselect.push(knex.raw(`c_sesi_hadir.ownid as "@ownid"`));
               let listcsave = await knex('c_save').select(listqselect)
-                .join('c_sesi_hadir', 'c_sesi_hadir.ownid', 'c_save.ownid')
-                .where('c_sesi_hadir.sesi', sesi).whereIn('key', keys).groupBy('c_save.ownid');
+                .rightOuterJoin('c_sesi_hadir', 'c_sesi_hadir.ownid', 'c_save.ownid')
+                .where('c_sesi_hadir.sesi', sesi).groupBy('c_sesi_hadir.ownid');
               let endlist = listcsave.map((r, i) => {
                 let nformat = format
                 for(let k in r)
                   nformat = nformat.replaceAll(`$${k}`, r[k]);
                 nformat = nformat.replaceAll('$no', i+1);
+                if(nformat.includes('null')) {
+                  nformat += ` @${r['@ownid'].split('@')[0]}`;
+                }
                 return nformat;
               }).join('\n');
               client.sendMessage(jid, `${c_sesi.sesi}:\n${endlist}`, MessageType.text, { quoted: message });
@@ -252,7 +265,7 @@ module.exports = async (client, message, event) => {
           if(participants.filter(r => r.jid == ownid)[0].isAdmin && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
             client.groupMakeAdmin(jid, [`${arg(1).substr(1)}@c.us`]);
             client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
-          } else if(owner.split('@')[0] != ownid.split('@')[0]) {
+          } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
             client.sendMessage(jid, 'hanya owner group yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
           } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
         } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
@@ -264,7 +277,7 @@ module.exports = async (client, message, event) => {
           if(participants.filter(r => r.jid == ownid)[0].isAdmin && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
             client.groupDemoteAdmin(jid, [`${arg(1).substr(1)}@c.us`]);
             client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
-          } else if(owner.split('@')[0] != ownid.split('@')[0]) {
+          } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
             client.sendMessage(jid, 'hanya owner group yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
           } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
         } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
@@ -273,9 +286,7 @@ module.exports = async (client, message, event) => {
       case '.stiker':
       case '.sticker':
         let bufferdata;
-        if (Object.keys(message) !== MessageType.text && Object.keys(message) !== MessageType.extendedText) {
-          bufferdata = await client.downloadMediaMessage(message);
-        } else if(quotedMessage && Object.keys(quotedMessage).length > 0) {
+        if(quotedMessage && Object.keys(quotedMessage).length > 0) {
           const messageType = Object.keys (quotedMessage)[0];
           if (messageType !== MessageType.text && messageType !== MessageType.extendedText) {
             bufferdata = await client.downloadMediaMessage({ message: quotedMessage });
@@ -285,6 +296,8 @@ module.exports = async (client, message, event) => {
               bufferdata = quotedMessage.conversation;
             } catch (err) {}
           }
+        } else if (Object.keys(message) !== MessageType.text && Object.keys(message) !== MessageType.extendedText) {
+          bufferdata = await client.downloadMediaMessage(message);
         }
         if(bufferdata) {
           // const savedFilename = await client.downloadAndSaveMediaMessage({ message: quotedMessage });
@@ -354,7 +367,7 @@ module.exports = async (client, message, event) => {
 
       case '.verify': // force
       default:
-        if(arg(0)[0] == '.') {
+        if(arg(0)[0] == '.' && arg(0) !== '.') {
           client.sendMessage(jid, 'maap gapaham, perintah tidak diketahui.', MessageType.text, { quoted: message });
         }
 
@@ -374,3 +387,5 @@ module.exports = async (client, message, event) => {
     client.sendMessage(jid, 'terjadi kesalahan!', MessageType.text, { quoted: message });
   }
 }
+
+module.exports = chatHandler;

@@ -30,7 +30,7 @@ const chatHandler = async (client, message, event) => {
           }
           client.sendMessage(jid, 'tersimpan!', MessageType.text, { quoted: message });
         } else {
-          client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+          client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
         }
         break;
 
@@ -38,7 +38,10 @@ const chatHandler = async (client, message, event) => {
         (async () => {
           let key = arg(1);
           let c_save = await knex('c_save').where({ ownid, key }).first();
-          client.sendMessage(jid, c_save.val, MessageType.text, { quoted: message });
+          if(c_save)
+            client.sendMessage(jid, c_save.val, MessageType.text, { quoted: message });
+          else
+            client.sendMessage(jid, `tidak terdapat '${key}' tersimpan`, MessageType.text, { quoted: message });
         })();
         break;
 
@@ -84,7 +87,7 @@ const chatHandler = async (client, message, event) => {
               headerType: 1
             }, MessageType.buttonsMessage, { quoted: message });
           } else {
-            client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, '!', MessageType.text, { quoted: message });
           }
         })();
         break;
@@ -102,7 +105,7 @@ const chatHandler = async (client, message, event) => {
               client.sendMessage(jid, `sesi ${c_sesi.sesi} tidak ditemukan!`, MessageType.text, { quoted: message });
             }
           } else {
-            client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
           }
         })();
         break;
@@ -134,7 +137,7 @@ const chatHandler = async (client, message, event) => {
             } else {
               client.sendMessage(jid, `sesi ${sesi} tidak ditemukan!`, MessageType.text, { quoted: message });
             }
-          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
         })();
         break;
 
@@ -175,7 +178,7 @@ const chatHandler = async (client, message, event) => {
             } else {
               client.sendMessage(jid, `sesi ${sesi} tidak ditemukan!`, MessageType.text, { quoted: message });
             }
-          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
         })();
         break;
 
@@ -194,15 +197,17 @@ const chatHandler = async (client, message, event) => {
             listqselect.push(knex.raw(`max(case when key = ? then val end) as "${key}"`, [ key ]));
           }
         });
-        let listcsave = await knex('c_save').select(listqselect).whereIn('key', keys).groupBy('ownid');
-        let endlist = listcsave.map((r, i) => {
-          let nformat = format
-          for(let k in r)
-            nformat = nformat.replaceAll(`$${k}`, r[k]);
-          nformat = nformat.replaceAll('$no', i+1);
-          return nformat;
-        }).join('\n');
-        client.sendMessage(jid, endlist, MessageType.text, { quoted: message });
+        if(keys.length > 0) {
+          let listcsave = await knex('c_save').select(listqselect).whereIn('key', keys).groupBy('ownid');
+          let endlist = listcsave.map((r, i) => {
+            let nformat = format
+            for(let k in r)
+              nformat = nformat.replaceAll(`$${k}`, r[k]);
+            nformat = nformat.replaceAll('$no', i+1);
+            return nformat;
+          }).join('\n');
+          client.sendMessage(jid, endlist, MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, 'format tidak valid!', MessageType.text, { quoted: message });
         break;
       
       case '.notes':
@@ -260,7 +265,7 @@ const chatHandler = async (client, message, event) => {
           if(arg(1)[0] == '@' || arg(1)[0] == '+') {
             client.groupAdd(jid, [`${arg(1).substr(1)}@c.us`]);
             client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
-          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
         } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
         break;
 
@@ -384,7 +389,7 @@ const chatHandler = async (client, message, event) => {
               await client.sendMessage(`${to.substr(1)}@c.us`, val, MessageType.text);
             }
           } else {
-            client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+            client.sendMessage(jid, 'parameter perintah tidak valid!', MessageType.text, { quoted: message });
           }
         })()
         break;

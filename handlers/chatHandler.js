@@ -227,6 +227,34 @@ const chatHandler = async (client, message, event) => {
         } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
         break;
 
+      case '.setname':
+      case '.setnama':
+        if(isGroup) {
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            let title = incometxt.substr(arg(0).length+1);
+            await client.groupUpdateSubject(jid, title);
+            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+          } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+        break;
+
+      case '.setdesc':
+        if(isGroup) {
+          const { participants } = await client.groupMetadata(jid);
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            let desc = incometxt.substr(arg(0).length+1);
+            await client.groupUpdateDescription(jid, desc);
+            client.sendMessage(jid, 'okay', MessageType.text, { quoted: message });
+          } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            client.sendMessage(jid, 'hanya admin yang bisa melakukan perintah ini!', MessageType.text, { quoted: message });
+          } else client.sendMessage(jid, 'permintaan ditolak!', MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, 'harus berada dalam group!', MessageType.text, { quoted: message });
+        break;
+        
+
       case '.invite':
         if(isGroup) {
           if(arg(1)[0] == '@' || arg(1)[0] == '+') {

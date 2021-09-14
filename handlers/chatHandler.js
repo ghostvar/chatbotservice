@@ -469,24 +469,6 @@ const chatHandler = async (client, message, event) => {
       case '.ping':
         client.sendMessage(jid, '_Pyon!!_', MessageType.text, { quoted: message });
         break;
-
-      // case '.spam': // todo: tunggu respon dari sendMessage baru kirm lagi
-      //   (async () => {
-      //     let to = arg(1);
-      //     let max = arg(2);
-      //     console.log(message);
-      //     let val = incometxt.substr(arg(0).length+arg(1).length+arg(2).length+2);
-      //     if(to[0] == '@' && !isNaN(parseInt(max)) && parseInt(max) <= 50) {
-      //       client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
-      //       for(let i = 0;i < parseInt(max);i++) {
-      //         console.log(['spamming', `${to.substr(1)}@c.us`, 'from', jid]);
-      //         await client.sendMessage(`${to.substr(1)}@c.us`, val, MessageType.text);
-      //       }
-      //     } else {
-      //       client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
-      //     }
-      //   })()
-      //   break;
       
       case '.help':
         let perintah = [

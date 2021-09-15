@@ -124,8 +124,6 @@ const chatHandler = async (client, message, event) => {
       case '.presensi':
       case '.hadiran':
       case '.hadir':
-      case 'Hadir ✋':
-      case 'hadir ✋':
         (async () => {
           let sesi = arg(1);
           if(sesi) {
@@ -408,7 +406,7 @@ const chatHandler = async (client, message, event) => {
       case '.promote':
         if(isGroup) {
           const { participants } = await client.groupMetadata(jid);
-          if(participants.filter(r => r.jid == ownid)[0].isAdmin && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
+          if((participants.filter(r => r.jid == ownid)[0].isSuperAdmin || process.env.WA_OWNER == ownid) && (arg(1)[0] == '@' || arg(1)[0] == '+')) {
             client.groupMakeAdmin(jid, [`${arg(1).substr(1)}@c.us`]);
             client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
           } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
@@ -420,7 +418,7 @@ const chatHandler = async (client, message, event) => {
       case '.demote':
         if(isGroup) {
           const { participants } = await client.groupMetadata(jid);
-          if(participants.filter(r => r.jid == ownid)[0].isAdmin && (arg(1)[0] == '@' || arg(1)[0] == '+')) { // bisa ambil dari array participants
+          if((participants.filter(r => r.jid == ownid)[0].isSuperAdmin || process.env.WA_OWNER == ownid) && (arg(1)[0] == '@' || arg(1)[0] == '+')) {
             client.groupDemoteAdmin(jid, [`${arg(1).substr(1)}@c.us`]);
             client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
           } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
@@ -508,7 +506,7 @@ const chatHandler = async (client, message, event) => {
         }
 
         if(arg(0)[0] == '.' && arg(0) !== '.') {
-          client.sendMessage(jid, '_maap gapaham, perintah tidak diketahui._', MessageType.text, { quoted: message });
+          client.sendMessage(jid, '_maap gapaham, perintah tidak dikenal._', MessageType.text, { quoted: message });
         }
 
         const verify = await knex('verification').select('verification.*', 'apps.webhook_url')

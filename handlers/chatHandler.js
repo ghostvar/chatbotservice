@@ -498,6 +498,13 @@ const chatHandler = async (client, message, event) => {
 
       case '.verify': // force
       default:
+        /**
+         * catatan: di posisi default, semua chat melewati baris kode ini,
+         * perlu hati-hati ketika terjadi error contoh koneksi database,
+         * dalam kasus ini error akan terlempar ke catch utama dibawah dengan mengirimkan pesan balasan terjadi kesalahan ke chat wa, 
+         * ekspektasi: catch dengan console error tanpa mengirimkan balasan chat
+         * solusi: masukan setiap block kode kemungkinan error dalam try dan catch tanpa reply
+         */
         if(incometxt.includes('sialan')) // todo: filters
           client.sendMessage(jid, 'mulai toxic, mau kick?', MessageType.text, { quoted: message });
 
@@ -509,19 +516,23 @@ const chatHandler = async (client, message, event) => {
           client.sendMessage(jid, '_maap gapaham, perintah tidak dikenal._', MessageType.text, { quoted: message });
         }
 
-        const verify = await knex('verification').select('verification.*', 'apps.webhook_url')
-        .join('apps', 'apps.id', '=', 'verification.appid')
-        .where({ token: incometxt }).first();
-        if(verify && verify.id) {
-          const chatid = uuid.v1();
-          await knex('app_chats').insert({ appid: verify.appid, chatid, jid });
-          await client.sendMessage(jid, verify.custom_txt_res || ('Nomor Berhasil Terverifikasi!' + (verify.redirect ? '\n\n' + verify.redirect : '')), MessageType.text);
-          axios.get(verify.webhook_url, { params: { chatid, token: verify.token, client: 'WA' } });
+        try {
+          const verify = await knex('verification').select('verification.*', 'apps.webhook_url')
+          .join('apps', 'apps.id', '=', 'verification.appid')
+          .where({ token: incometxt }).first();
+          if(verify && verify.id) {
+            const chatid = uuid.v1();
+            await knex('app_chats').insert({ appid: verify.appid, chatid, jid });
+            await client.sendMessage(jid, verify.custom_txt_res || ('Nomor Berhasil Terverifikasi!' + (verify.redirect ? '\n\n' + verify.redirect : '')), MessageType.text);
+            axios.get(verify.webhook_url, { params: { chatid, token: verify.token, client: 'WA' } });
+          }
+        } catch (error) {
+          console.error(['catch-verification', error]);
         }
         break;
     }
   } catch (error) {
-    console.error(error);
+    console.error(['catch-main', error]);
     client.sendMessage(jid, '_terjadi kesalahan!_', MessageType.text, { quoted: message });
   }
 }

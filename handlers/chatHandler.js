@@ -70,7 +70,7 @@ const chatHandler = async (client, message, event) => {
             if(c_sesi) {
               /**
                * todo: uuid instean of sesi, sesi sebagai keterangan saja
-               * todo: buat tombol untuk melakukan presensi X
+               * todo: buat tombol untuk melakukan presensi (X pada perangkat android tombol hanya bisa di klik sekali)
                * todo: ubah atribut
                *  - kunci hadir sesi hanya berlaku hari ini, 24jam, atau 1jam
                *  - reply ketika presensi
@@ -367,7 +367,7 @@ const chatHandler = async (client, message, event) => {
           const { participants } = await client.groupMetadata(jid);
           if(participants.filter(r => r.jid == ownid)[0].isAdmin && arg(1)[0] == '@' || arg(1)[0] == '+') {
             if(participants.filter(r => r.jid.split('@')[0] == arg(1).substr(1))[0].isAdmin) {
-              client.sendMessage(jid, '_masih jadi admin, kick ditolak!+', MessageType.text, { quoted: message }); // perlu ga ya
+              client.sendMessage(jid, '_masih jadi admin, kick ditolak!_', MessageType.text, { quoted: message }); // perlu ga ya
             } else {
               client.groupRemove(jid, [`${arg(1).substr(1)}@c.us`]);
               client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });

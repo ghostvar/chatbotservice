@@ -262,25 +262,15 @@ const chatHandler = async (client, message, event) => {
         break;
 
       case '.getnote':
-        async function getNote() {
-          let notename = arg(1);
-          if(notename) {
-            let c_note = await knex('c_notes').where('jid', jid).where('name', notename).first();
-            if(c_note) {
-              client.sendMessage(jid, c_note.note, MessageType.text, { quoted: message });
-            } else {
-              client.sendMessage(jid, `_catatan ${notename} tidak ditemukan!_`, MessageType.text, { quoted: message });
-            }
-          } else client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
-        }
-        if(isGroup) {
-          const { participants } = await client.groupMetadata(jid);
-          if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
-            await getNote();
-          } else client.sendMessage(jid, '_hanya admin yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });
-        } else {
-          await getNote();
-        }
+        let notename = arg(1);
+        if(notename) {
+          let c_note = await knex('c_notes').where('jid', jid).where('name', notename).first();
+          if(c_note) {
+            client.sendMessage(jid, c_note.note, MessageType.text, { quoted: message });
+          } else {
+            client.sendMessage(jid, `_catatan ${notename} tidak ditemukan!_`, MessageType.text, { quoted: message });
+          }
+        } else client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
         break;
       
       case '.removenote':

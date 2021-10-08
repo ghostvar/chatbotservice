@@ -365,12 +365,16 @@ const chatHandler = async (client, message, event) => {
       case '.kick':
         if(isGroup) {
           const { participants } = await client.groupMetadata(jid);
-          if(participants.filter(r => r.jid == ownid)[0].isAdmin && arg(1)[0] == '@' || arg(1)[0] == '+') {
-            if(participants.filter(r => r.jid.split('@')[0] == arg(1).substr(1))[0].isAdmin) {
-              client.sendMessage(jid, '_masih jadi admin, kick ditolak!_', MessageType.text, { quoted: message }); // perlu ga ya
-            } else {
-              client.groupRemove(jid, [`${arg(1).substr(1)}@c.us`]);
-              client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
+          if(participants.filter(r => r.jid == ownid)[0].isAdmin) {
+            const quotedTarget = (((messageObj.extendedTextMessage || {}).contextInfo || {}).participant || '').replace('@s.whatsapp.net', '');
+            if((arg(1)[0] == '@' || arg(1)[0] == '+') || quotedTarget) {
+              const target = arg(1).substr(1) || quotedTarget;
+              if(participants.filter(r => r.jid.split('@')[0] == target)[0].isAdmin) {
+                client.sendMessage(jid, '_masih jadi admin, kick ditolak!_', MessageType.text, { quoted: message }); // perlu ga ya
+              } else {
+                client.groupRemove(jid, [`${target}@c.us`]);
+                client.sendMessage(jid, '_okay_', MessageType.text, { quoted: message });
+              }
             }
           } else if(!participants.filter(r => r.jid == ownid)[0].isAdmin) {
             client.sendMessage(jid, '_hanya admin yang bisa melakukan perintah ini!_', MessageType.text, { quoted: message });

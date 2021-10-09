@@ -14,7 +14,7 @@ const chatHandler = async (client, message, event) => {
     const ownid = isGroup ? message.key.participant : jid;
     const messageObj = message.message || {};
     const quotedMessage = ((messageObj.extendedTextMessage || {}).contextInfo || {}).quotedMessage || {} ;
-    let rawincometxt = messageObj.conversation || (messageObj.imageMessage || {}).caption || (messageObj.extendedTextMessage || {}).text || (messageObj.buttonsResponseMessage || {}).selectedButtonId || '';
+    let rawincometxt = messageObj.conversation || (messageObj.imageMessage || messageObj.videoMessage || {}).caption || (messageObj.extendedTextMessage || {}).text || (messageObj.buttonsResponseMessage || {}).selectedButtonId || '';
     const incometxt = rawincometxt[0] == '#' && rawincometxt !== '#' ? rawincometxt = '.getnote ' + rawincometxt.substr(1) : rawincometxt; // aliases # as .getnote
     const arg = (n) => incometxt.trim().split(' ')[n] || '';
 
@@ -430,17 +430,22 @@ const chatHandler = async (client, message, event) => {
             bufferdata = await client.downloadMediaMessage({ message: quotedMessage });
           } else {
             try {
-              new URL(s);
+              new URL(quotedMessage.conversation);
               bufferdata = quotedMessage.conversation;
             } catch (err) {}
           }
-        } else if (Object.keys(message) !== MessageType.text && Object.keys(message) !== MessageType.extendedText) {
-          bufferdata = await client.downloadMediaMessage(message);
+        } else {
+          if (Object.keys(messageObj)[0] === MessageType.video || Object.keys(messageObj)[0] === MessageType.image) {
+            bufferdata = await client.downloadMediaMessage(message);
+          } else if (Object.keys(messageObj)[0] === MessageType.text || Object.keys(messageObj)[0] === MessageType.extendedText) {
+            try {
+              let s = messageObj.conversation.replace(/.sticker|.stiker/, '').trim();
+              new URL(s);
+              bufferdata = s;
+            } catch (err) {}
+          }
         }
         if(bufferdata) {
-          // const savedFilename = await client.downloadAndSaveMediaMessage({ message: quotedMessage });
-          // const b = await client.downloadMediaMessage({ message: quotedMessage });
-          // fs.writeFile("test.mp4", b,  "binary",function(err) { });
           const stickerMetadata = {
             type: 'full',
             pack: arg(1) || 'random',

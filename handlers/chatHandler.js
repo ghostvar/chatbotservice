@@ -505,7 +505,7 @@ const chatHandler = async (client, message, event) => {
       case '.translite':
         let lang = arg(1);
         let tr = quotedMessage.conversation || incometxt.substr(arg(0).length+arg(1).length+2);
-        if(lang && tr) {
+        if(lang && tr && ['en','ar','zh','fr','de','hi','id','ga','it','ja','ko','pl','pt','ru','es','tr','vi'].includes(lang)) {
           const res = await axios.post("https://libretranslate.de/translate", {
             q: tr,
             source: "auto",

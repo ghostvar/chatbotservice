@@ -6,7 +6,7 @@ const { createSticker, Sticker } = require('wa-sticker-formatter');
 const uuid = require('uuid');
 const ocr = require('node-tesseract-ocr');
 const URL = require("url").URL;
-const translate = require('translate');
+// const translate = require('translate');
 // const fs = require('fs');
 
 const chatHandler = async (client, message, event) => {

@@ -6,6 +6,7 @@ const { createSticker, Sticker } = require('wa-sticker-formatter');
 const uuid = require('uuid');
 const ocr = require('node-tesseract-ocr');
 const URL = require("url").URL;
+const translate = require('translate');
 // const fs = require('fs');
 
 const chatHandler = async (client, message, event) => {
@@ -499,6 +500,30 @@ const chatHandler = async (client, message, event) => {
           client.sendMessage(jid, '_Kirim atau reply pesan [foto,url] untuk dapat membuat stiker!_', MessageType.text, { quoted: message });
         }
         break;
+      
+      case '.tr':
+      case '.translite':
+        let lang = arg(1);
+        let tr = quotedMessage.conversation || incometxt.substr(arg(0).length+arg(1).length+2);
+        if(lang && tr) {
+          const res = await fetch("https://libretranslate.de/translate", {
+            method: "POST",
+            body: JSON.stringify({
+              q: tr,
+              source: "auto",
+              target: lang,
+              format: "text"
+            }),
+            headers: { "Content-Type": "application/json" }
+          });
+          let restext = await res.json();
+          // translate.engine = "libre";
+          // console.log([tr, lang]);
+          // const text = await translate(tr, lang);
+          client.sendMessage(jid, restext.translatedText, MessageType.text, { quoted: message });
+        } else client.sendMessage(jid, '_parameter perintah tidak valid!_', MessageType.text, { quoted: message });
+        break;
+      
 
       case '.sleep':
         client.sendMessage(jid, '_Zzz... zzz... zzz...._', MessageType.text, { quoted: message });
@@ -552,9 +577,9 @@ const chatHandler = async (client, message, event) => {
           client.sendMessage(jid, 'ntahlah', MessageType.text, { quoted: message });
         }
 
-        if(arg(0)[0] == '.' && arg(0) !== '.') {
-          client.sendMessage(jid, '_maap gapaham, perintah tidak dikenal._', MessageType.text, { quoted: message });
-        }
+        // if(arg(0)[0] == '.' && arg(0) !== '.') { 
+        //   client.sendMessage(jid, '_maap gapaham, perintah tidak dikenal._', MessageType.text, { quoted: message });
+        // }
 
         try {
           const verify = await knex('verification').select('verification.*', 'apps.webhook_url')

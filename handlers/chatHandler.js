@@ -4,8 +4,9 @@ const axios = require('axios');
 const { MessageType } = require('@adiwajshing/baileys');
 const { createSticker, Sticker } = require('wa-sticker-formatter');
 const uuid = require('uuid');
+const ocr = require('node-tesseract-ocr');
 const URL = require("url").URL;
-const fs = require('fs');
+// const fs = require('fs');
 
 const chatHandler = async (client, message, event) => {
   const { jid } = event;
@@ -456,6 +457,46 @@ const chatHandler = async (client, message, event) => {
           await client.sendMessage(jid, sticker, MessageType.sticker, { quoted: message });
         } else {
           client.sendMessage(jid, '_Kirim atau reply pesan [foto,video,gif,url] untuk dapat membuat stiker!_', MessageType.text, { quoted: message });
+        }
+        break;
+
+      case '.ocr':
+      case '.ketik':
+        let bufferdatax;
+        if(quotedMessage && Object.keys(quotedMessage).length > 0) {
+          const messageType = Object.keys (quotedMessage)[0];
+          if (messageType !== MessageType.text && messageType !== MessageType.extendedText) { // perlu cek type juga
+            bufferdatax = await client.downloadMediaMessage({ message: quotedMessage });
+          } else {
+            try {
+              new URL(quotedMessage.conversation);
+              bufferdatax = quotedMessage.conversation;
+            } catch (err) {}
+          }
+        } else {
+          if (Object.keys(messageObj)[0] === MessageType.image) {
+            bufferdatax = await client.downloadMediaMessage(message);
+          } else if (Object.keys(messageObj)[0] === MessageType.text || Object.keys(messageObj)[0] === MessageType.extendedText) {
+            try {
+              let s = messageObj.conversation.replace(/.ketik|.ocr/, '').trim();
+              new URL(s);
+              bufferdatax = s;
+            } catch (err) {}
+          }
+        }
+        if(bufferdatax) {
+          ocr.recognize(bufferdatax, {
+            oem: 1,
+            psm: 3,
+          })
+          .then(async (text) => {
+            await client.sendMessage(jid, text, MessageType.text, { quoted: message });
+          })
+          .catch((error) => {
+            console.error(error);
+          })
+        } else {
+          client.sendMessage(jid, '_Kirim atau reply pesan [foto,url] untuk dapat membuat stiker!_', MessageType.text, { quoted: message });
         }
         break;
 

@@ -21,6 +21,7 @@ async function connectToWhatsApp() {
 
   await conn.connect();
   conn.on('chat-update', async event => {
+    console.log("on, "+JSON.stringify(event))
     if (event.messages && event.count) {
       const message = event.messages.all()[0];
       await chatHandler(conn, message, event);

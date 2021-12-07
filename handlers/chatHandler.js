@@ -1,11 +1,17 @@
 require('dotenv').config();
 const knex = require('../services/knex');
 const axios = require('axios');
-const { MessageType } = require('@adiwajshing/baileys');
+const { MessageType, Mimetype } = require('@adiwajshing/baileys');
 const { createSticker, Sticker } = require('wa-sticker-formatter');
 const uuid = require('uuid');
 const ocr = require('node-tesseract-ocr');
+const gtts = require('node-gtts');
+const path = require('path');
+const fs = require('fs');
+const Lame = require('node-lame').Lame;
+const { exec } = require('child_process');
 const URL = require("url").URL;
+const { randomInt } = require('crypto');
 // const translate = require('translate');
 // const fs = require('fs');
 
@@ -556,6 +562,29 @@ const chatHandler = async (client, message, event) => {
           ],
           listType: 1
         }, MessageType.listMessage, { quoted: message });
+        break;
+
+      case '.tts':
+        let kalimat = incometxt.substring(arg(0).length,incometxt.length)
+        let path_file = path.join(__dirname,`../misc/${arg(1)}.mp3`)
+        let audio_ = path.dirname(require.main.filename) + `/misc/${arg(1)}.mp3`
+        let audio_convert = path.dirname(require.main.filename) + `/misc/${arg(1)}-convert.aac`
+        let audio_buffer
+
+        gtts('id').save(path_file,String(kalimat),() => console.log(audio_))
+
+        try {
+          setTimeout(() => {
+            exec(`ffmpeg -i ${audio_} ${audio_convert}`, (error, stdout, stderr) => {
+              if (error) { console.error(`error: ${error}`);return; }
+              if (stderr!= "")
+              console.error(`stderr: ${stderr}`);
+            });
+          },1250)
+          /* fs.readFileSync(path.dirname(require.main.filename) + `/misc/${arg(1)}.wav`) */
+          client.sendMessage(jid,fs.readFileSync(audio_convert),MessageType.audio,{ mimeType: Mimetype.mp4Audio })
+        } catch (error) {
+        }
         break;
 
       case '.verify': // force

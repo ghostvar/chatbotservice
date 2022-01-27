@@ -24,8 +24,21 @@ cd chatbotservice
 ```
 Installasi Pustaka
 ```bash
-npm install
+yarn install
 ```
+
+> ### TODO: COMPILE MANUAL
+
+```bash
+npm i -g typescript
+npm i -g tsc
+npm i -g rimraf
+
+cd ./node_modules/@adiwajshing/baileys && npm run build:all
+cd ./node_modules/@adiwajshing/keyed-db && npm run build
+cd ./node_modules/wa-sticker-formatter && npm run build
+```
+
 Installasi Knex Command Line
 ```bash
 npm install -g knex

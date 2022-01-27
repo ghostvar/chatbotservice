@@ -1,7 +1,7 @@
 module.exports = {
   apps : [{
     name   : "chatbotservice",
-    script : "./main.js"
+    script : "./test.js"
   }],
 
   deploy : {
